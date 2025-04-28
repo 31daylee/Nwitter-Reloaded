@@ -1,0 +1,30 @@
+# Node.js dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+
+# Editor settings
+.vscode/
+*.suo
+*.sln
+*.njsproj
+*.ntvs*
+
+# TypeScript and Vite
+*.tsbuildinfo
+*.tscache
+vite.config.*
