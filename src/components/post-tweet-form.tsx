@@ -2,6 +2,7 @@ import { addDoc, collection } from "firebase/firestore";
 import React, { useState } from "react";
 import styled from "styled-components"
 import { auth, db } from "../firebase";
+import { handleFileChange } from "../util/util";
 
 const Form = styled.form`
     display: flex;
@@ -56,15 +57,14 @@ const SubmitBtn = styled.input`
 export default function PostTweetForm(){
     const [isLoading, setLoading] = useState(false);
     const [tweet, setTweet] = useState("");
-    const [file, setFile] = useState<File | null>(null);
+    const [file, setFile] = useState<string | null>(null);
     const onChange = (e:React.ChangeEvent<HTMLTextAreaElement>) =>{
         setTweet(e.target.value)
     };
-    const onFileChange = (e:React.ChangeEvent<HTMLInputElement>) =>{
-        const {files} = e.target;
-        if(files && files.length === 1){
-            setFile(files[0]);
-        }
+    const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleFileChange(e, (fileData) => {
+            setFile(fileData);
+        })
     }
     const onSubmit = async(e:React.FormEvent<HTMLFormElement>) =>{
         e.preventDefault();
@@ -78,6 +78,7 @@ export default function PostTweetForm(){
                 createdAt: Date.now(),
                 username: user.displayName || "Anonymous",
                 userId: user.uid,
+                fileData: file
             })
         } catch (e) {
             console.log(e);
@@ -86,10 +87,13 @@ export default function PostTweetForm(){
         }
 
     }
-    return <Form onSubmit={onSubmit}>
-        <TextArea rows={5} maxLength={180} onChange={onChange} value={tweet} placeholder="What is happening?"/>
-        <AttachFileButton htmlFor="file">{file? "Photo added" : "Add photo"}</AttachFileButton>
-        <AttachFileInput onChange={onFileChange} type="file" id="file" accept="image/*" />
-        <SubmitBtn type="submit" value={isLoading ? "Posting..." : "Post tweet"}/>
-    </Form>
+    
+    return (
+        <Form onSubmit={onSubmit}>
+            <TextArea required rows={5} maxLength={180} onChange={onChange} value={tweet} placeholder="What is happening?"/>
+            <AttachFileButton htmlFor="file">{file? "Photo added ✅" : "Add photo"}</AttachFileButton>
+            <AttachFileInput onChange={onFileChange} type="file" id="file" accept="image/*" />
+            <SubmitBtn type="submit" value={isLoading ? "Posting..." : "Post tweet"}/>
+        </Form>
+    );
 }
