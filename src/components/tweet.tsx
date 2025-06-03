@@ -1,7 +1,8 @@
 import styled from "styled-components";
 import { ITweet } from "./timeline";
 import { auth, db } from "../firebase";
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { useState } from "react";
 
 const Wrapper = styled.div`
     display: grid;
@@ -37,15 +38,62 @@ const DeleteButton = styled.button`
     cursor: pointer;
 
 `
-;
+const EditButton = styled.button`
+    background-color: blue;
+    color: white;
+    font-weight: 600;
+    border: 0;
+    font-size: 12px;
+    padding: 5px 10px;
+    text-transform: uppercase;
+    border-radius: 5px;
+    margin-left: 5px;
+    cursor: pointer;
+
+`
+const SaveButton = styled.button`
+    background-color: yellowgreen;
+    color: white;
+    font-weight: 600;
+    border: 0;
+    font-size: 12px;
+    padding: 5px 10px;
+    text-transform: uppercase;
+    border-radius: 5px;
+    cursor: pointer;
+
+`
+const CancelButton = styled.button`
+    background-color: gray;
+    color: white;
+    font-weight: 600;
+    border: 0;
+    font-size: 12px;
+    padding: 5px 10px;
+    text-transform: uppercase;
+    border-radius: 5px;
+    margin-left: 5px;
+    margin-top: 5px;
+    cursor: pointer;
+
+`
+const Textarea = styled.textarea`
+    margin-top: 5px;
+    font-size: 15px;
+    background-color: black;
+    color : white;
+    border: none;
+    resize: none;
+`
 export default function Tweet({username,fileData,tweet,userId, id}:ITweet){
     const user = auth.currentUser;
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedTweet, setEditedTweet] = useState(tweet);
+
     const onDelete = async() =>{
         const ok = confirm("Are you sure you want to delete this tweet?");
-        console.log("ok", ok)
         if(!ok || user?.uid !== userId) return;
         try {
-            console.log(id);
             await deleteDoc(doc(db,"tweets", id));
         } catch (error) {
             console.log(error);
@@ -53,12 +101,47 @@ export default function Tweet({username,fileData,tweet,userId, id}:ITweet){
 
         }
     }
+    const onEdit = async() => {
+        if( user?.uid !== userId) return;
+        try {
+            const twwetRef = doc(db, "tweets", id);
+            await updateDoc(twwetRef, {
+                tweet : editedTweet,
+            })
+            setIsEditing(false);
+            alert("Tweet updated successfully!");
+        } catch (e) {
+            console.log(e);
+            alert("Falied to update tweet")
+            
+        }
+    }
     return (
     <Wrapper>
         <Column>
             <Username>{username}</Username>
-            <Payload>{tweet}</Payload>
-            {user?.uid === userId ? <DeleteButton onClick={onDelete}>Delete</DeleteButton> : null}
+              {isEditing ? (
+                <div>
+                    <Textarea 
+                        value={editedTweet}
+                        onChange={(e)=>setEditedTweet(e.target.value)}>
+                    </Textarea>
+                </div>
+            ) : <Payload>{tweet}</Payload>
+            }
+            {
+                isEditing? ( 
+                <div>
+                    <SaveButton onClick={onEdit}>Save</SaveButton>
+                    <CancelButton onClick={()=> setIsEditing(false)}>Cancel</CancelButton>
+                </div>      
+                ) : 
+                <div>
+                    {user?.uid === userId ? <DeleteButton onClick={onDelete}>Delete</DeleteButton> : null}
+                    {user?.uid === userId ? <EditButton onClick={()=>setIsEditing(true)}>Edit</EditButton> : null}
+                </div>
+            }
+            
         </Column>
         {fileData ?(  
             <Column>
@@ -66,7 +149,7 @@ export default function Tweet({username,fileData,tweet,userId, id}:ITweet){
             <Photo src={fileData}/>
         </Column>)
         : null }
-      
+    
         
     </Wrapper>
     )
